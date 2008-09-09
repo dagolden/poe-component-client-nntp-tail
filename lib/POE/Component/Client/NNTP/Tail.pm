@@ -23,7 +23,6 @@ sub spawn {
     args => [ \%opts ], 
     package_states => [
       $class => { 
-#        shutdown        => '_shutdown', 
         nntp_connected    => 'nntp_connected',
         nntp_registered   => 'nntp_registered', 
         nntp_socketerr    => 'nntp_socketerr',
@@ -41,6 +40,7 @@ sub spawn {
         poll 
         reconnect 
         register 
+        unregister
       ) ],
     ],
   );
@@ -56,20 +56,35 @@ sub _start {
     "NNTP-Client", { NNTPServer => $args->{server} }
   );
   $kernel->post( 'NNTP-Client' => 'register' => 'all' );
+  $kernel->post( 'NNTP-Client' => 'connect' );
   return;
 }
 
 sub _child {}
-sub _stop {}
+
+sub _stop {
+  my ( $kernel, $heap ) = @_[KERNEL, HEAP];
+  $kernel->post( 'NNTP-Client' => 'unregister' => 'all' );
+  $kernel->post( 'NNTP-Client' => 'shutdown' );
+  $kernel->alias_remove($heap->{group});
+  return;
+}
 
 #--------------------------------------------------------------------------#
-# events from our client
+# events from our clients
 #--------------------------------------------------------------------------#
 
 sub register {
   my ($kernel, $heap, $sender) = @_[KERNEL, HEAP, SENDER];
   $kernel->refcount_increment( $sender->ID, __PACKAGE__ );
   $heap->{listeners}{$sender} = 1;
+  return;
+}
+
+sub unregister {
+  my ($kernel, $heap, $sender) = @_[KERNEL, HEAP, SENDER];
+  $kernel->refcount_decrement( $sender->ID, __PACKAGE__ );
+  delete $heap->{listeners}{$sender};
   return;
 }
 
@@ -82,12 +97,15 @@ sub poll {
   if ( $heap->{connected} ) {
     $kernel->post( 'NNTP-Client' => group => $heap->{group} );
   }
+  else {
+    $kernel->yield( 'reconnect' );
+  }
   return;
 }
 
 sub reconnect {
   my ( $kernel, $heap ) = @_[KERNEL, HEAP];
-  $kernel->( 'NNTP-Client' => 'connect' );
+  $kernel->post( 'NNTP-Client' => 'connect' );
   return;
 }
 
@@ -106,7 +124,6 @@ sub dispatch {
 
 sub nntp_registered {
   my ($kernel, $heap, $sender) = @_[KERNEL, HEAP, SENDER];
-  $kernel->post( $sender => 'connect' );
   return;
 }
 
@@ -115,18 +132,20 @@ sub nntp_connected {
   return;
 }
 
+# if connection can't be made, wait for next poll period to try again
 sub nntp_socketerr {
   my ($kernel, $heap, $sender) = @_[KERNEL, HEAP, SENDER];
   my ($error) = $_[ARG0];
   warn "Socket error: $error\n";
-  $kernel->yield( 'nntp_disconnected' );
+  $heap->{connected} = 0;
+  $kernel->delay( 'reconnect' => $heap->{poll} );
   return;
 }
 
+# if we time-out, just note it and wait for next poll to reconnect
 sub nntp_disconnected {
   my ($kernel, $heap, $sender) = @_[KERNEL, HEAP, SENDER];
   $heap->{connected} = 0;
-  $kernel->delay( 'reconnect', 60 );
   return;
 }
 
@@ -141,7 +160,6 @@ sub nntp_group_selected {
   my ($kernel, $heap, $sender) = @_[KERNEL, HEAP, SENDER];
   my ($estimate,$first,$last,$group) = split( /\s+/, $_[ARG0] );
 
-  print "polling... last article is $last\n";
   # first time, we just need to record the last article
   if ( ! exists $heap->{last_article} ) {
      $heap->{last_article} = $last;
@@ -158,11 +176,7 @@ sub nntp_group_selected {
 
 sub nntp_got_article {
   my ($kernel, $heap, $sender) = @_[KERNEL, HEAP, SENDER];
-  my ($response, $lines) = @_[ARG0, ARG1];
-  # XXX should we check lines for CRLF translation
-  my $article = Email::Simple->new( join "\n", @{ $lines } );
-  my $subject = $article->header('Subject') || "(Subject not parsed)";
-  $kernel->yield( dispatch => 'new_article' => $subject );
+  $kernel->yield( dispatch => 'new_article' => @_[ARG0, ARG1] );
   return;
 }
 

@@ -29,7 +29,10 @@ sub _start {
 }
 
 sub new_article {
-  print "$_[ARG0]\n";
+  my ($response, $lines) = @_[ARG0 .. $#_];
+  my $article = Email::Simple->new( join "\n", @{ $lines } );
+  my $subject = $article->header('Subject') || "(Subject not parsed)";
+  print "$subject\n";
   return;
 }
 
