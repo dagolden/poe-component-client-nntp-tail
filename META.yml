@@ -1,0 +1,28 @@
+---
+name: POE-Component-Client-NNTP-Tail
+version: 0.01
+author:
+  - 'David Golden <dagolden@cpan.org>'
+abstract: Sends events for new articles posted to an NNTP newsgroup
+license: apache
+resources:
+  license: http://apache.org/licenses/LICENSE-2.0
+requires:
+  POE: 1
+  POE::Component::Client::NNTP: 2.08
+  perl: 5.006
+build_requires:
+  Test::More: 0.62
+provides:
+  POE::Component::Client::NNTP::Tail:
+    file: lib/POE/Component/Client/NNTP/Tail.pm
+    version: 0.01
+generated_by: Module::Build version 0.280801
+meta-spec:
+  url: http://module-build.sourceforge.net/META-spec-v1.2.html
+  version: 1.2
+no_index:
+  directory:
+    - examples
+    - inc
+    - t
