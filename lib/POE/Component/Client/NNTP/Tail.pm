@@ -13,7 +13,6 @@ $VERSION = eval $VERSION; ## no critic
 
 use Carp;
 use POE qw(Component::Client::NNTP);
-use Email::Simple;
 
 sub spawn {
   my $class = shift;
@@ -189,7 +188,7 @@ __END__
 
 = NAME
 
-POE::Component::Client::NNTP::Tail - Add abstract here
+POE::Component::Client::NNTP::Tail - Sends events for new articles posted to an NNTP newsgroup
 
 = VERSION
 
@@ -197,7 +196,39 @@ This documentation describes version %%VERSION%%.
 
 = SYNOPSIS
 
-    use POE::Component::Client::NNTP::Tail;
+  use POE qw( Component::Client::NNTP::Tail );
+  use Email::Simple;
+
+  my $server  = "nntp.perl.org";
+  my $group   = "perl.cpan.testers";
+
+  POE::Component::Client::NNTP::Tail->spawn(
+    server        => $server,
+    group         => $group,
+    poll          => 60,
+  );
+
+  POE::Session->create(
+    package_states => [
+      main => [qw(_start new_article)]
+    ],
+  );
+
+  POE::Kernel->run;
+  exit 0;
+
+  sub _start {
+    $_[KERNEL]->post( $group => 'register' );
+    return;
+  }
+
+  # print subject line to terminal
+  sub new_article {
+    my ($response, $lines) = @_[ARG0, ARG1];
+    my $article = Email::Simple->new( join "\n", @$lines );
+    print $article->header('Subject'), "\n";
+    return;
+  }
 
 = DESCRIPTION
 
@@ -216,10 +247,15 @@ existing test-file that illustrates the bug or desired feature.
 
 = SEE ALSO
 
+* [POE]
+* [POE::Component::Client::NNTP]
 
 = AUTHOR
 
 David A. Golden (DAGOLDEN)
+
+Substantial portions based on code in POE::Component::SmokeBox::Uploads::NNTP
+by Chris Williams.
 
 = COPYRIGHT AND LICENSE
 

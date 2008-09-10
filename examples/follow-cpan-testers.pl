@@ -4,6 +4,7 @@ use warnings;
 
 #sub POE::Kernel::ASSERT_DEFAULT () { 1 }
 use POE qw( Component::Client::NNTP::Tail);
+use Email::Simple;
 
 my $server  = "nntp.perl.org";
 my $group   = "perl.cpan.testers";
@@ -29,10 +30,9 @@ sub _start {
 }
 
 sub new_article {
-  my ($response, $lines) = @_[ARG0 .. $#_];
-  my $article = Email::Simple->new( join "\n", @{ $lines } );
-  my $subject = $article->header('Subject') || "(Subject not parsed)";
-  print "$subject\n";
+  my ($response, $lines) = @_[ARG0, ARG1];
+  my $article = Email::Simple->new( join "\n", @$lines );
+  print $article->header('Subject'), "\n";
   return;
 }
 
