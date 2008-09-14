@@ -2,7 +2,6 @@
 use strict;
 use warnings;
 
-#sub POE::Kernel::ASSERT_DEFAULT () { 1 }
 use POE qw( Component::Client::NNTP::Tail);
 use Email::Simple;
 
@@ -10,14 +9,13 @@ my $server  = "nntp.perl.org";
 my $group   = "perl.cpan.testers";
 
 POE::Component::Client::NNTP::Tail->spawn(
-  server        => $server,
-  group         => $group,
-  poll          => 60,
+  NNTPServer  => $server,
+  Group       => $group,
 );
 
 POE::Session->create(
   package_states => [
-    main => [qw(_start new_article)]
+    main => [qw(_start new_header)]
   ],
 );
 
@@ -29,7 +27,7 @@ sub _start {
   return;
 }
 
-sub new_article {
+sub new_header {
   my ($response, $lines) = @_[ARG0, ARG1];
   my $article = Email::Simple->new( join "\n", @$lines );
   print $article->header('Subject'), "\n";
