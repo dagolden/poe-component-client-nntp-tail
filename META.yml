@@ -9,9 +9,11 @@ resources:
   license: http://apache.org/licenses/LICENSE-2.0
 requires:
   POE: 1
-  POE::Component::Client::NNTP: 2.08
+  POE::Component::Client::NNTP: 2.1
+  Params::Validate: 0
   perl: 5.006
 build_requires:
+  POE::Component::Server::NNTP: 1
   Test::More: 0.62
 provides:
   POE::Component::Client::NNTP::Tail:

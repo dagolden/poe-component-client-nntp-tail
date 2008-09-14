@@ -12,43 +12,124 @@ This documentation describes version 0.01.
 
 =head1 SYNOPSIS
 
-   use POE qw( Component::Client::NNTP::Tail );
-   use Email::Simple;
- 
-   my $server  = "nntp.perl.org";
-   my $group   = "perl.cpan.testers";
- 
-   POE::Component::Client::NNTP::Tail->spawn(
-     server        => $server,
-     group         => $group,
-     poll          => 60,
-   );
- 
-   POE::Session->create(
-     package_states => [
-       main => [qw(_start new_article)]
-     ],
-   );
- 
-   POE::Kernel->run;
-   exit 0;
- 
-   sub _start {
-     $_[KERNEL]->post( $group => 'register' );
-     return;
-   }
- 
-   # print subject line to terminal
-   sub new_article {
-     my ($response, $lines) = @_[ARG0, ARG1];
-     my $article = Email::Simple->new( join "\n", @$lines );
-     print $article->header('Subject'), "\n";
-     return;
-   }
+   XXX replace with examples/synopsis
 
 =head1 DESCRIPTION
 
+This component periodically polls an NNTP newsgroup and posts POE events to
+component listeners as new articles are available.  These events contains the
+article ID and header text for the given articles.  This component also
+facilitates retrieving the full text of a particular article of interest.
+
+Internally, it uses L<POE::Component::Client::NNTP> to manage the NNTP session.
+
 =head1 USAGE
+
+Spawn a new component session for each newsgroup to follow and send the
+C<<< register >>> event to specify an event to sent back when new articles arrive.
+
+Handle the new article event. Optionally, send the C<<< get_article >>> event to 
+request the full text of the article.
+
+=head1 METHODS
+
+=head2 spawn
+
+   POE::Component::Client::NNTP::Tail->spawn(
+     NNTPServer  => 'nntp.perl.org',
+     Group       => 'perl.cpan.testers',
+   );
+
+The C<<< spawn >>> class method launches a new POE::Session to follow a given
+newsgroup.  The C<<< NNTPServer >>> and C<<< Group >>> arguments are required, all other
+arguments are optional:
+
+=over
+
+=item *
+
+NNTPServer (required) -- name or IP address of the NNTP server
+
+=item *
+
+Group (required) -- newsgroup to follow
+
+=item *
+
+Interval -- minimum number of seconds between checks for new messages
+(defaults to 60)
+
+=item *
+
+Alias -- POE::Session alias name (defaults to the newsgroup name)
+
+=item *
+
+Port -- server port for NNTP connections
+
+=item *
+
+LocalAddr -- local address for outbound IP connection
+
+=item *
+
+Debug -- if true, a trace of events and arguments will be printed to STDERR
+
+=back
+
+You must spawn multiple times to follow multiple newsgroups.
+
+=head1 INPUT EVENTS
+
+The component will respond to the following events.
+
+=head2 register
+
+   $_[KERNEL]->post( 'perl.cpan.testers' => register => $event_name );
+
+This event notifies the component to post a C<<< new_header >>> event to the sender
+when new articles arrive.  The event will be sent using the C<<< $event_name >>>
+provided, or will default to 'new_header'.  Multiple sessions may register
+with a single POE::Component::Client::NNTP::Tail session.
+
+=head2 unregister
+
+   $_[KERNEL]->post( 'perl.cpan.testers' => unregister );
+
+This event will stop the component from posting new_header events to the
+sender.
+
+=head2 get_article
+
+   $_[KERNEL]->post( 
+     'perl.cpan.testers' => get_article => $article_id => $event_name
+   );
+
+This event requests that the full text of C<<< $article_id >>> be returned in a
+C<<< got_article >>> event.  The event will be sent using the C<<< $event_name >>>
+provided, or will default to 'got_article'.
+
+=head1 OUTPUT EVENTS
+
+The component sends the following events types, though the actual event
+name may be different depending on what is specified in the C<<< register >>> and
+C<<< get_article >>> events.
+
+=head2 new_header
+
+   ($article_id, $lines) = @_[ARG0, ARG1];
+
+The C<<< new_header >>> event is sent when new articles are found in the newsgroup.
+The C<<< $lines >>> argument is a reference to an array of lines that contain the
+article header.  Lines have had newlines removed.
+
+=head2 got_article
+
+   ($article_id, $lines) = @_[ARG0, ARG1];
+
+The C<<< got_article >>> event is sent when the full text of an article is retrieved.
+The C<<< $lines >>> argument is a reference to an array of lines that contain the full
+article, including header and body text.  Lines have had newlines removed.
 
 =head1 BUGS
 
@@ -77,8 +158,8 @@ L<POE::Component::Client::NNTP>
 
 David A. Golden (DAGOLDEN)
 
-Substantial portions based on code in POE::Component::SmokeBox::Uploads::NNTP
-by Chris Williams.
+Portions based on or inspired by code in
+POE::Component::SmokeBox::Uploads::NNTP by Chris Williams.
 
 =head1 COPYRIGHT AND LICENSE
 

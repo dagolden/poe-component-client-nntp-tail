@@ -6,6 +6,7 @@
 
 use strict;
 use warnings;
+use POE qw/Component::Server::NNTP/;
 
 use Test::More tests => 1;
 

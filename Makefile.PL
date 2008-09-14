@@ -10,7 +10,9 @@ WriteMakefile
           'VERSION_FROM' => 'lib/POE/Component/Client/NNTP/Tail.pm',
           'PREREQ_PM' => {
                            'Test::More' => '0.62',
-                           'POE::Component::Client::NNTP' => '2.08',
+                           'Params::Validate' => 0,
+                           'POE::Component::Client::NNTP' => '2.1',
+                           'POE::Component::Server::NNTP' => '1',
                            'POE' => '1'
                          }
         )
