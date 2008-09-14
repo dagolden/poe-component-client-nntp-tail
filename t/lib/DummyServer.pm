@@ -136,6 +136,7 @@ sub nntpd_cmd_article {
   return;
 }
 
+1;
 __END__
 Newsgroups: perl.cpan.testers
 Path: nntp.perl.org
