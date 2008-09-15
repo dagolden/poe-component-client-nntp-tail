@@ -4,6 +4,7 @@ use warnings;
 
 use Safe;
 use Email::Simple;
+use Email::Address;
 use LWP::Simple;
 use Getopt::Long;
 use POE qw( 
@@ -79,7 +80,7 @@ POE::Component::Client::NNTP::Tail->spawn(
 
 POE::Session->create(
   package_states => [
-    main => [qw(_start refresh_dist_list new_header got_article)]
+    main => [qw(_start refresh_dist_list new_header got_article smtp_err)]
   ],
 );
 
@@ -93,6 +94,7 @@ exit 0;
 sub _start {
   $_[KERNEL]->call( $_[SESSION], 'refresh_dist_list' );
   $_[KERNEL]->post( $group => 'register' );
+  print "$0: startup completed; now monitoring for reports...\n";
   return;
 }
 
@@ -136,7 +138,46 @@ sub new_header {
 sub got_article {
   my ($article_id, $lines) = @_[ARG0, ARG1];
   my $article = Email::Simple->new( join "\015\012", @$lines );
-  # eventually send email w PoCo::Client::SMTP  
-  print $article->header('Subject'), "\n";
+  my $subject = $article->header('Subject');
+  my $from = Email::Address->parse( $article->header('From') ) 
+    or die "$0: parse error '" . $article->header('From') . "'\n";
+  my $sender = $from->address;
+  
+  print "$0: from $sender\: $subject\n";
+  POE::Component::Client::SMTP->send(
+    From          => $sender,
+    To            => "$author\@cpan.org",
+    Body          => $article->as_string,
+    Server        => $smtp,
+    Context       => $article_id,
+    SMTP_Failure  => 'smtp_err',
+  );
+
+  return;
+}
+
+my %failed;
+sub smtp_err {
+  my ($article_id, $errors) = @_[ARG0, ARG1];
+  if ( $errors->{SMTP_Server_Error} ) {
+    warn "$0: SMTP error sending report $article_id\: $errors->{SMTP_Server_Error}\n";
+  }
+  elsif ( $errors->{Timeout} ) {
+    warn "$0: Timeout sending report $article_id\n";
+  }
+  elsif ( $errors->{Configure} ) {
+    die "$0: Could not authenticate to SMTP server\n";
+  }
+  else {
+    warn "$0: Internal error sending report $article_id\n"
+  }
+  if ( ! $failed{$article_id}++ ) {
+    warn "$0: will try again to send report $article_id\n";
+    $_[KERNEL]->post( $group => 'get_article' => $article_id );
+  }
+  else {
+    warn "$0: will not try again for report $article_id\n";
+  }
+  return;
 }
 

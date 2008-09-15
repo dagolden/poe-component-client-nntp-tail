@@ -28,7 +28,7 @@ sub _start {
 }
 
 sub new_header {
-  my ($response, $lines) = @_[ARG0, ARG1];
+  my ($article_id, $lines) = @_[ARG0, ARG1];
   my $article = Email::Simple->new( join "\n", @$lines );
   print $article->header('Subject'), "\n";
   return;
