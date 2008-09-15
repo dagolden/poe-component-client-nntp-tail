@@ -139,7 +139,7 @@ sub got_article {
   my ($article_id, $lines) = @_[ARG0, ARG1];
   my $article = Email::Simple->new( join "\015\012", @$lines );
   my $subject = $article->header('Subject');
-  my $from = Email::Address->parse( $article->header('From') ) 
+  my ($from) = Email::Address->parse( $article->header('From') ) 
     or die "$0: parse error '" . $article->header('From') . "'\n";
   my $sender = $from->address;
   
