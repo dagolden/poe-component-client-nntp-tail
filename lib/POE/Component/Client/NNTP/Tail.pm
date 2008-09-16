@@ -11,7 +11,7 @@ use warnings;
 our $VERSION = '0.01';
 $VERSION = eval $VERSION; ## no critic
 
-use Carp;
+use Carp::POE;
 use Params::Validate;
 use POE qw(Component::Client::NNTP);
 
