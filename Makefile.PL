@@ -9,11 +9,14 @@ WriteMakefile
           'EXE_FILES' => [],
           'VERSION_FROM' => 'lib/POE/Component/Client/NNTP/Tail.pm',
           'PREREQ_PM' => {
+                           'POE::Component::Client::NNTP' => '2.1',
+                           'Email::Date::Format' => '1.002',
                            'Test::More' => '0.62',
                            'Params::Validate' => 0,
-                           'POE::Component::Client::NNTP' => '2.1',
                            'POE::Component::Server::NNTP' => '1',
-                           'POE' => '1'
+                           'Email::Simple' => '2.003',
+                           'POE' => '1',
+                           'Carp::POE' => 0
                          }
         )
 ;

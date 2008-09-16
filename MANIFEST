@@ -1,6 +1,8 @@
 Build.PL
 Changes
 examples/follow-cpan-testers.pl
+examples/remailer.pl
+examples/synopsis.pl
 inc/Module/Build/WikiDoc.pm
 INSTALL
 lib/POE/Component/Client/NNTP/Tail.pm
@@ -12,6 +14,8 @@ MANIFEST.SKIP
 META.yml
 README
 t/01-POE-Component-Client-NNTP-Tail.t
+t/dummy-server.t
+t/lib/DummyServer.pm
 Todo
 xt/critic.t
 xt/perlcriticrc
@@ -19,4 +23,3 @@ xt/pod-coverage.t
 xt/pod-format.t
 xt/spelling.t
 xt/stopwords.txt
-t/02-dummy-server.t.t

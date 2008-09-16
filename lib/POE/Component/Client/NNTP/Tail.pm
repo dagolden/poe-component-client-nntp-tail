@@ -5,6 +5,7 @@
 # copy of the License from http://www.apache.org/licenses/LICENSE-2.0
 
 package POE::Component::Client::NNTP::Tail;
+use 5.006;
 use strict;
 use warnings;
 

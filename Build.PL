@@ -26,6 +26,8 @@ my $build = $class->new(
     },
     build_requires => {
         'Test::More' => 0.62,
+        'Email::Date::Format' => 1.002,
+        'Email::Simple' => 2.003,
         'POE::Component::Server::NNTP' => 1.00,
     },
     meta_add            => { 
@@ -35,4 +37,3 @@ my $build = $class->new(
     },
 );
 $build->create_build_script;
-
