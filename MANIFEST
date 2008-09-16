@@ -16,6 +16,7 @@ README
 t/01-POE-Component-Client-NNTP-Tail.t
 t/dummy-server.t
 t/lib/DummyServer.pm
+t/optional-names.t
 Todo
 xt/critic.t
 xt/perlcriticrc
