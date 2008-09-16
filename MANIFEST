@@ -19,3 +19,4 @@ xt/pod-coverage.t
 xt/pod-format.t
 xt/spelling.t
 xt/stopwords.txt
+t/02-dummy-server.t.t

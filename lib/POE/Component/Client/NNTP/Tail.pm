@@ -46,13 +46,16 @@ sub spawn {
         nntp_211	        => '_nntp_group_selected',
         nntp_220	        => '_nntp_got_article',
         nntp_221	        => '_nntp_got_head',
+        nntp_411          => '_nntp_no_group',
+        nntp_423          => '_nntp_no_article',
+        nntp_430          => '_nntp_no_article',
       },
       # session events
       $class => [ qw( _start _stop _child  ) ],
       # internal events
       $class => [ qw( _poll _reconnect ) ],
       # API events
-      $class => [ qw( register unregister get_article ) ],
+      $class => [ qw( register unregister get_article shutdown ) ],
     ],
   );
 }
@@ -102,11 +105,9 @@ sub _child {
 }
 
 sub _stop {
-  my ( $kernel, $heap ) = @_[KERNEL, HEAP];
+  my ( $kernel, $session, $heap ) = @_[KERNEL, SESSION, HEAP];
   &_debug if $heap->{Debug};
-  $kernel->post( $heap->{nntp_id} => 'unregister' => 'all' );
-  $kernel->post( $heap->{nntp_id} => 'shutdown' );
-  $kernel->alias_remove($_) for $kernel->alias_list;
+  $kernel->call( $session, 'shutdown' ) if $heap->{nntp};
   return;
 }
 
@@ -126,7 +127,7 @@ sub register {
   &_debug if $heap->{Debug};
   my ($event) = $_[ARG0] || 'new_header';
   $kernel->refcount_increment( $sender->ID, __PACKAGE__ );
-  $heap->{listeners}{$sender} = $event;
+  $heap->{listeners}{$sender->ID} = $event;
   return;
 }
 
@@ -140,7 +141,7 @@ sub unregister {
   my ($kernel, $heap, $sender) = @_[KERNEL, HEAP, SENDER];
   &_debug if $heap->{Debug};
   $kernel->refcount_decrement( $sender->ID, __PACKAGE__ );
-  delete $heap->{listeners}{$sender};
+  delete $heap->{listeners}{$sender->ID};
   return;
 }
 
@@ -159,6 +160,25 @@ sub get_article {
   # store requesting session and desired return event
   push @{$heap->{requests}{$article_id}}, [$sender, $return_event];
   $kernel->post( $heap->{nntp_id} => article => $article_id );
+  return;
+}
+
+#--------------------------------------------------------------------------#
+# shudown
+#--------------------------------------------------------------------------#
+
+sub shutdown {
+  my ( $kernel, $heap ) = @_[KERNEL, HEAP];
+  &_debug if $heap->{Debug};
+  # unregister anyone that didn't do it themselves
+  for my $listener ( keys %{ $heap->{listeners} } ) {
+    $kernel->refcount_decrement( $listener, __PACKAGE__ );
+    delete $heap->{listeners}{$listener};
+  }
+  $kernel->call( $heap->{nntp_id} => 'unregister' => 'all' );
+  $kernel->call( $heap->{nntp_id} => 'shutdown' );
+  delete $heap->{nntp};
+  $kernel->alias_remove($_) for $kernel->alias_list;
   return;
 }
 
@@ -231,6 +251,23 @@ sub _nntp_server_ready {
   $heap->{connected} = 1;
   $kernel->yield( '_poll' );
   undef;
+}
+
+# if the group doesn't exist, then we shut ourselves down
+sub _nntp_no_group {
+  my ($kernel, $heap, $sender) = @_[KERNEL, HEAP, SENDER];
+  &_debug if $heap->{Debug};
+  warn "No such newsgroup $heap->{Group}";
+  $kernel->yield( 'shutdown' );
+  return;
+}
+
+# if the article doesn't exist, warn about it
+sub _nntp_no_article {
+  my ($kernel, $heap, $sender) = @_[KERNEL, HEAP, SENDER];
+  &_debug if $heap->{Debug};
+  warn "Couldnt find article in $heap->{Group}\n";
+  return;
 }
 
 # if there are new articles, request their headers
