@@ -1,7 +1,7 @@
 # Copyright (c) 2008 by David Golden. All rights reserved.
 # Licensed under Apache License, Version 2.0 (the "License").
 # You may not use this file except in compliance with the License.
-# A copy of the License was distributed with this file or you may obtain a 
+# A copy of the License was distributed with this file or you may obtain a
 # copy of the License from http://www.apache.org/licenses/LICENSE-2.0
 
 package POE::Component::Client::NNTP::Tail;
@@ -34,12 +34,12 @@ sub spawn {
   my %opts = validate( @_, \%spawn_args );
 
   POE::Session->create(
-    heap => \%opts, 
+    heap => \%opts,
     package_states => [
       # nntp component events
-      $class => { 
+      $class => {
         nntp_connected    => '_nntp_connected',
-        nntp_registered   => '_nntp_registered', 
+        nntp_registered   => '_nntp_registered',
         nntp_socketerr    => '_nntp_socketerr',
         nntp_disconnected => '_nntp_disconnected',
         nntp_200	        => '_nntp_server_ready',
@@ -60,15 +60,15 @@ sub spawn {
     ],
   );
 }
-  
+
 sub _debug {
   my $where = (caller(1))[3];
   $where =~ s{.*::}{P::C::C::N::T::};
   my @args = @_[ARG0 .. $#_];
-  for ( @args ) { 
+  for ( @args ) {
     $_ = 'undef' if not defined $_;
   }
-  my $args = @args ? join( " " => "", (map { "'$_'" } @args), "" ) : ""; 
+  my $args = @args ? join( " " => "", (map { "'$_'" } @args), "" ) : "";
   warn "$where->($args)\n";
   return;
 }
@@ -133,7 +133,7 @@ sub register {
 }
 
 #--------------------------------------------------------------------------#
-# unregister -- 
+# unregister --
 #
 # removes sender registration
 #--------------------------------------------------------------------------#
@@ -176,6 +176,7 @@ sub shutdown {
     $kernel->refcount_decrement( $listener, __PACKAGE__ );
     delete $heap->{listeners}{$listener};
   }
+  $kernel->alarm_remove_all();
   $kernel->call( $heap->{nntp_id} => 'unregister' => 'all' );
   $kernel->call( $heap->{nntp_id} => 'shutdown' );
   delete $heap->{nntp};
@@ -197,6 +198,7 @@ sub _poll {
   else {
     $kernel->yield( '_reconnect' );
   }
+  $kernel->delay( '_poll' => $heap->{Interval} );
   return;
 }
 
@@ -319,7 +321,7 @@ sub _nntp_got_article {
   delete $heap->{requests}{$article_id};
   return;
 }
- 
+
 1;
 
 __END__
@@ -363,8 +365,8 @@ This documentation describes version %%VERSION%%.
     my ($article_id, $lines) = @_[ARG0, ARG1];
     my $article = Email::Simple->new( join("\r\n", @$lines) );
     if ( $article->header('Subject') =~ /^FAIL/ ) {
-      $_[KERNEL]->post( 
-        'perl.cpan.testers' => 'get_article' => $article_id 
+      $_[KERNEL]->post(
+        'perl.cpan.testers' => 'get_article' => $article_id
       );
     }
     return;
@@ -395,7 +397,7 @@ Internally, it uses [POE::Component::Client::NNTP] to manage the NNTP session.
 
 Spawn a new component session for each newsgroup to follow. Send the
 {register} event to specify an event to sent back when new articles arrive.
-Handle the new article event. Optionally, send the {get_article} event to 
+Handle the new article event. Optionally, send the {get_article} event to
 request the full text of the article.
 
 == spawn
@@ -442,7 +444,7 @@ sender.
 
 == get_article
 
-  $_[KERNEL]->post( 
+  $_[KERNEL]->post(
     'perl.cpan.testers' => get_article => $article_id => $event_name
   );
 
@@ -454,7 +456,7 @@ provided, or will default to 'got_article'.
 
   $_[KERNEL]->post( 'perl.cpan.testers' => 'shutdown' );
 
-This event requests that the component stop broadcasting events, 
+This event requests that the component stop broadcasting events,
 disconnect from the NNTP server and generally stop processing.
 
 = OUTPUT EVENTS
@@ -481,8 +483,8 @@ article, including header and body text.  Lines have had newlines removed.
 
 = BUGS
 
-Please report any bugs or feature using the CPAN Request Tracker.  
-Bugs can be submitted through the web interface at 
+Please report any bugs or feature using the CPAN Request Tracker.
+Bugs can be submitted through the web interface at
 [http://rt.cpan.org/Dist/Display.html?Queue=POE-Component-Client-NNTP-Tail]
 
 When submitting a bug or request, please include a test-file or a patch to an
@@ -506,7 +508,7 @@ Copyright (c) 2008 by David A. Golden. All rights reserved.
 
 Licensed under Apache License, Version 2.0 (the "License").
 You may not use this file except in compliance with the License.
-A copy of the License was distributed with this file or you may obtain a 
+A copy of the License was distributed with this file or you may obtain a
 copy of the License from http://www.apache.org/licenses/LICENSE-2.0
 
 Files produced as output though the use of this software, shall not be
