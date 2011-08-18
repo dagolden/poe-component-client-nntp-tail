@@ -1,8 +1,3 @@
-Build
-_build/*
-Makefile
-blib/*
-pm_to_blib
-MANIFEST.bak
-Makefile.old
+/.build
+/POE-Component-Client-NNTP-Tail-*
 cover_db
