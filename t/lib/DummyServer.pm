@@ -1,5 +1,5 @@
 # Adapted from synopsis of PoCo::Server::NNTP
-package t::lib::DummyServer;
+package DummyServer;
 
 use strict;
 use warnings;

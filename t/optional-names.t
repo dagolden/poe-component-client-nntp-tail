@@ -55,11 +55,11 @@ sub _shutdown{
 sub _setup { 
   my ($kernel, $session, $heap) = @_[KERNEL, SESSION, HEAP];
   # start the server
-  $heap->{server} = t::lib::DummyServer->spawn( 
+  $heap->{server} = DummyServer->spawn( 
     port => 10119, 
     Debug => $DEBUG, 
   );
-  isa_ok( $heap->{server}, 't::lib::DummyServer' );
+  isa_ok( $heap->{server}, 'DummyServer' );
   # seed the group
   my $article = Email::Simple->new( "Subject: seed\n\nHello world\n" );
   $heap->{server}->add_article( 'test.group', $article->as_string );
