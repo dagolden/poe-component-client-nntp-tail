@@ -107,6 +107,7 @@ sub _start {
       posting => 0, 
       port    => $heap->{port},
   );
+  $heap->{nntpd_id} = $heap->{nntpd}->session_id;
   $heap->{clients} = { };
   $kernel->alias_set( 'DummyServer' );
   return;

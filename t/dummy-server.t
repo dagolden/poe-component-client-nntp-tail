@@ -7,6 +7,10 @@
 use strict;
 use warnings;
 use lib 't/lib';
+
+# assertions on
+#sub POE::Kernel::ASSERT_DEFAULT () { 1 }
+
 use DummyServer;
 use Email::Simple;
 use POE qw(Component::Client::NNTP::Tail);
