@@ -6,7 +6,8 @@
 
 use strict;
 use warnings;
-use t::lib::DummyServer;
+use lib 't/lib';
+use DummyServer;
 use Email::Simple;
 use POE qw(Component::Client::NNTP::Tail);
 
