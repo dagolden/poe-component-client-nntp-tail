@@ -1,0 +1,69 @@
+use strict;
+use warnings;
+
+use 5.006;
+
+use ExtUtils::MakeMaker 6.17;
+
+my %WriteMakefileArgs = (
+  "ABSTRACT" => "Sends events for new articles posted to an NNTP newsgroup",
+  "AUTHOR" => "David Golden <dagolden\@cpan.org>",
+  "CONFIGURE_REQUIRES" => {
+    "ExtUtils::MakeMaker" => "6.17"
+  },
+  "DISTNAME" => "POE-Component-Client-NNTP-Tail",
+  "LICENSE" => "apache",
+  "MIN_PERL_VERSION" => "5.006",
+  "NAME" => "POE::Component::Client::NNTP::Tail",
+  "PREREQ_PM" => {
+    "Carp::POE" => 0,
+    "POE" => 0,
+    "POE::Component::Client::NNTP" => 0,
+    "POE::Component::Server::NNTP" => 0,
+    "Params::Validate" => 0,
+    "strict" => 0,
+    "warnings" => 0
+  },
+  "TEST_REQUIRES" => {
+    "Email::Date::Format" => 0,
+    "Email::Simple" => 0,
+    "ExtUtils::MakeMaker" => 0,
+    "File::Spec" => 0,
+    "POE::Component::Server::NNTP" => 0,
+    "Test::More" => 0,
+    "lib" => 0
+  },
+  "VERSION" => "0.04",
+  "test" => {
+    "TESTS" => "t/*.t"
+  }
+);
+
+
+my %FallbackPrereqs = (
+  "Carp::POE" => 0,
+  "Email::Date::Format" => 0,
+  "Email::Simple" => 0,
+  "ExtUtils::MakeMaker" => 0,
+  "File::Spec" => 0,
+  "POE" => 0,
+  "POE::Component::Client::NNTP" => 0,
+  "POE::Component::Server::NNTP" => 0,
+  "Params::Validate" => 0,
+  "Test::More" => 0,
+  "lib" => 0,
+  "strict" => 0,
+  "warnings" => 0
+);
+
+
+unless ( eval { ExtUtils::MakeMaker->VERSION(6.63_03) } ) {
+  delete $WriteMakefileArgs{TEST_REQUIRES};
+  delete $WriteMakefileArgs{BUILD_REQUIRES};
+  $WriteMakefileArgs{PREREQ_PM} = \%FallbackPrereqs;
+}
+
+delete $WriteMakefileArgs{CONFIGURE_REQUIRES}
+  unless eval { ExtUtils::MakeMaker->VERSION(6.52) };
+
+WriteMakefile(%WriteMakefileArgs);

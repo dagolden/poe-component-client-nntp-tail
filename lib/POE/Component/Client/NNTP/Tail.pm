@@ -1,9 +1,12 @@
 package POE::Component::Client::NNTP::Tail;
+
 use 5.006;
 use strict;
 use warnings;
 # ABSTRACT: Sends events for new articles posted to an NNTP newsgroup
 # VERSION
+
+our $VERSION = '0.03';
 
 use Carp::POE;
 use Params::Validate;
