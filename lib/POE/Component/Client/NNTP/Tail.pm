@@ -6,7 +6,7 @@ use warnings;
 # ABSTRACT: Sends events for new articles posted to an NNTP newsgroup
 # VERSION
 
-our $VERSION = '0.03';
+our $VERSION = '0.05';
 
 use Carp::POE;
 use Params::Validate;
