@@ -15,6 +15,7 @@ my %spawn_args = (
   NNTPServer    => 1,
   # optional with defaults
   Interval      => { default => 60 },
+  TimeOut       => { default => 30 },
   # purely optional
   Port          => 0,
   LocalAddr     => 0,
@@ -43,6 +44,7 @@ sub spawn {
         nntp_411          => '_nntp_no_group',
         nntp_423          => '_nntp_no_article',
         nntp_430          => '_nntp_no_article',
+        nntp_503          => '_nntp_503_error',
       },
       # session events
       $class => [ qw( _start _stop _child  ) ],
@@ -80,7 +82,7 @@ sub _start {
 
   # setup NNTP including optional args if defined;
   my %nntp_args;
-  for my $k ( qw/NNTPServer Port LocalAddr/ ) {
+  for my $k ( qw/NNTPServer Port LocalAddr TimeOut/ ) {
     $nntp_args{$k} = $heap->{$k} if exists $heap->{$k};
   }
   my $alias = "NNTP-Client-" . $session->ID;
@@ -266,6 +268,15 @@ sub _nntp_no_article {
   return;
 }
 
+# 503 error in response to group query reconnect
+sub _nntp_503_error {
+  my ($kernel, $heap, $sender) = @_[KERNEL, HEAP, SENDER];
+  &_debug if $heap->{Debug};
+  $heap->{connected} = 0;
+  $kernel->delay( '_reconnect' => $heap->{Interval} );
+  return;
+}
+
 # if there are new articles, request their headers
 # also schedules the next check
 sub _nntp_group_selected {
@@ -402,6 +413,8 @@ arguments are optional:
 * Group (required) -- newsgroup to follow
 * Interval -- minimum number of seconds between checks for new messages
 (defaults to 60)
+* TimeOut -- number of seconds to wait for a response from server
+(defaults to 30)
 * Alias -- POE::Session alias name (defaults to the newsgroup name)
 * Port -- server port for NNTP connections
 * LocalAddr -- local address for outbound IP connection
